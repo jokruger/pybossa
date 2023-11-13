@@ -949,6 +949,11 @@ def tutorial(short_name):
 @blueprint.route('/<short_name>/<int:task_id>/results.json')
 def export(short_name, task_id):
     """Return a file with all the TaskRuns for a given Task"""
+    access_token = current_app.config.get('ACCESS_TOKEN')
+    user_access_token = request.args.get('access_token', None)
+    if user_access_token and access_token != user_access_token:
+        abort(401)
+
     # Check if the project exists
     project, owner, ps = project_by_shortname(short_name)
 
