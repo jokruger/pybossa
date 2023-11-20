@@ -17,6 +17,7 @@
 # along with PYBOSSA.  If not, see <http://www.gnu.org/licenses/>.
 """Core module for PYBOSSA."""
 import os
+import re
 import logging
 import humanize
 from flask import Flask, url_for, request, render_template, \
@@ -542,6 +543,10 @@ def setup_hooks(app):
             user = user_repo.get_by(api_key=apikey)
             if user:
                 _request_ctx_stack.top.user = user
+
+        if not _is_tokenized_template_correct():
+            abort(401)
+
         # Handle forms
         request.body = request.form
         if (request.method == 'POST' and
@@ -623,6 +628,17 @@ def setup_hooks(app):
         response = dict(template='400.html', code=400,
                         description=reason)
         return handle_content_type(response)
+
+    def _is_tokenized_template_correct():
+        tokenized_template = app.config.get('TOKENIZED_URL_TEMPLATE')
+        pattern = re.compile(str(tokenized_template), re.IGNORECASE)
+
+        if pattern.match(request.path):
+            user_access_token = request.args.get('access_token', None)
+            access_token_original = app.config.get('ACCESS_TOKEN')
+            if user_access_token != access_token_original:
+                return False
+        return True
 
 
 def setup_jinja2_filters(app):
