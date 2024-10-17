@@ -742,9 +742,10 @@ def news():
         urls += current_app.config.get('NEWS_URL')
     for url in urls:
         d = feedparser.parse(url)
+        entries = d.entries if d and d.entries else None
         tmp = get_news(score)
         if (d.entries and (len(tmp) == 0)
-           or (tmp[0]['updated'] != d.entries[0]['updated'])):
+           or (tmp and entries and tmp[0]['updated'] != entries[0]['updated'])):
             mapping = dict()
             mapping[pickle.dumps(d.entries[0])] = float(score)
             sentinel.master.zadd(FEED_KEY, mapping)
